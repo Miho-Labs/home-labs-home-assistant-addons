@@ -1,0 +1,11 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Home Labs Sync — uruchomienie usługi synchronizacji
+# ==============================================================================
+bashio::log.info "Uruchamianie Home Labs Sync..."
+
+export PYTHONUNBUFFERED=1
+export PYTHONPATH=/usr/src
+cd /usr/src || bashio::exit.nok "Brak katalogu /usr/src"
+
+exec python3 -m hl_sync

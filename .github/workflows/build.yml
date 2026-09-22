@@ -1,0 +1,65 @@
+name: Build add-ons
+
+# Each add-on is released on its own. Home Assistant offers an update when the
+# `version:` in an add-on's config.yaml changes on main, and then pulls
+# ghcr.io/miho-labs/<image>-<arch>:<version>. So on every push to main this
+# builds, per add-on, only the version whose image does not exist yet: bumping
+# Home Labs Backup never rebuilds Home Labs Sync, and a push that changes no
+# version builds nothing. An existing image tag is never overwritten.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "home_labs_sync/**"
+      - "home_labs_backup/**"
+      - ".github/workflows/build.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.addon }} (${{ matrix.arch }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [aarch64, amd64]
+        addon: [home_labs_sync, home_labs_backup]
+        include:
+          - addon: home_labs_sync
+            image: home-labs-sync
+          - addon: home_labs_backup
+            image: home-labs-backup
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Version and whether it is already built
+        id: version
+        run: |
+          version=$(sed -n 's/^version: *//p' ${{ matrix.addon }}/config.yaml | tr -d '"')
+          ref="ghcr.io/miho-labs/${{ matrix.image }}-${{ matrix.arch }}:${version}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          if docker manifest inspect "$ref" > /dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "$ref już istnieje — pomijam build"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Buduję $ref"
+          fi
+      - name: Build and push
+        if: steps.version.outputs.exists == 'false'
+        uses: home-assistant/builder@master
+        with:
+          args: |
+            --${{ matrix.arch }} \
+            --target ${{ matrix.addon }} \
+            --image "${{ matrix.image }}-${{ matrix.arch }}" \
+            --docker-hub ghcr.io/miho-labs \
+            --addon
