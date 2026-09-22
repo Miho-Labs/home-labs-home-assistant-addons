@@ -1,0 +1,13 @@
+{
+  "domain": "home_labs_backup",
+  "name": "Home Labs Backup",
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": ["backup"],
+  "documentation": "https://github.com/Miho-Labs/home-labs-home-assistant-addons/blob/main/home_labs_backup/DOCS.md",
+  "integration_type": "service",
+  "iot_class": "cloud_push",
+  "issue_tracker": "https://github.com/Miho-Labs/home-labs-home-assistant-addons/issues",
+  "requirements": [],
+  "version": "0.1.1"
+}

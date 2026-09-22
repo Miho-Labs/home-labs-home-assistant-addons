@@ -1,0 +1,31 @@
+configuration:
+  api_url:
+    name: Home Labs server URL
+    description: API address the add-on pulls configuration from. Change only when asked by Home Labs.
+  api_token:
+    name: Access token
+    description: Token from the Home Labs panel (starts with "hls_"). Grants access to this home's configuration only.
+  interval_minutes:
+    name: Sync interval (minutes)
+    description: How often the add-on checks whether Home Labs published new configuration (5–1440).
+  scopes:
+    name: Sync scopes
+    description: What to synchronize — dashboards (dashboards and www files), themes, automations (Home Labs automations), scenes (Home Labs scenes), media (WallPanel screensaver photos in /media/wallpanel; turn off if you manage the photos yourself).
+  restart_policy:
+    name: Home Assistant restart policy
+    description: never — report only; notify — persistent notification when a restart is required; auto — automatic restart inside the window when the configuration check passes.
+  restart_window:
+    name: Automatic restart window
+    description: Local time range HH:MM-HH:MM in which an automatic restart is allowed. May wrap past midnight, e.g. 23:00-05:00.
+  entities_export_schedule:
+    name: Entity export schedule
+    description: off — on demand only; daily — every day; weekly — every Monday at the configured hour.
+  entities_export_hour:
+    name: Entity export hour
+    description: Local hour (0–23) at which the scheduled export runs.
+  dry_run:
+    name: Dry run
+    description: Show in the panel and report what would change without writing anything. Recommended for the first start.
+  log_level:
+    name: Log level
+    description: Verbosity of the add-on log (debug, info, warning).

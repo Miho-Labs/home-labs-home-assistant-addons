@@ -1,0 +1,10 @@
+configuration:
+  api_url:
+    name: Adres serwera Home Labs
+    description: Adres API Home Labs. Zmieniaj tylko na prośbę Home Labs.
+  api_token:
+    name: Token dostępu
+    description: Token z panelu Home Labs (zaczyna się od „hls_”) — ten sam, co w dodatku Home Labs Sync, albo osobny. Daje dostęp wyłącznie do kopii tego domu.
+  log_level:
+    name: Poziom logowania
+    description: debug, info albo warning.

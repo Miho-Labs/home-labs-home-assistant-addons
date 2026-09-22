@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: ruff + pytest (oba dodatki)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install dependencies
+        run: pip install aiohttp pyyaml pytest pytest-aiohttp pytest-asyncio ruff
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: Tests — Home Labs Sync
+        run: python -m pytest -q home_labs_sync/tests
+      - name: Tests — Home Labs Backup
+        run: python -m pytest -q home_labs_backup/tests
+
+  backup-in-home-assistant:
+    # Home Labs Backup's integration inside a real Home Assistant (config flows,
+    # the backup agent). Separate job: the HA pytest plugin takes over the session.
+    name: Home Labs Backup w Home Assistant
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install dependencies
+        run: pip install pytest-homeassistant-custom-component
+      - name: Tests
+        run: python -m pytest -q home_labs_backup/tests_ha -o testpaths=

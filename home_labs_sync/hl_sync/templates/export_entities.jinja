@@ -1,0 +1,8 @@
+{#- Eksport encji klienta → clients/<slug>/entities.csv
+    HA: Narzędzia deweloperskie → Szablon → wklej całość → skopiuj wynik do pliku.
+    Wcześniej: każde pomieszczenie powinno mieć przypisane piętro (Ustawienia → Obszary). -#}
+entity_id;name;area;floor;device_class;unit;state
+{%- set skip = ['update','conversation','tts','stt','wake_word','persistent_notification'] %}
+{%- for s in states | rejectattr('domain','in',skip) | sort(attribute='entity_id') %}
+{{ s.entity_id }};{{ s.name }};{{ area_name(s.entity_id) or '-' }};{{ floor_name(s.entity_id) or '-' }};{{ s.attributes.device_class | default('-') }};{{ s.attributes.unit_of_measurement | default('-') }};{{ s.state }}
+{%- endfor %}

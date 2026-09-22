@@ -1,0 +1,29 @@
+name: Home Labs Backup
+version: 0.1.1
+slug: home_labs_backup
+description: Kopie zapasowe Home Assistant w chmurze Home Labs — natywna lokalizacja kopii w Ustawieniach
+url: https://github.com/Miho-Labs/home-labs-home-assistant-addons
+arch: [aarch64, amd64]
+image: ghcr.io/miho-labs/home-labs-backup-{arch}
+# Backup agents with upload progress (on_progress) need a recent core.
+homeassistant: "2025.8.0"
+init: false
+startup: application
+boot: auto
+homeassistant_api: true
+hassio_api: true
+# Hands the integration its server address and token (Supervisor discovery).
+discovery:
+  - home_labs_backup
+map:
+  # Only to install custom_components/home_labs_backup — nothing else is written.
+  - type: homeassistant_config
+    read_only: false
+options:
+  api_url: https://public.home-labs.pl
+  api_token: ""
+  log_level: info
+schema:
+  api_url: url
+  api_token: password
+  log_level: list(debug|info|warning)

@@ -1,0 +1,30 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "Home Labs Backup is already set up.",
+      "missing_token": "The Home Labs Backup add-on has no token yet. Paste it in the add-on's configuration."
+    },
+    "error": {
+      "cannot_connect": "Cannot reach the Home Labs server.",
+      "invalid_token": "The token was rejected. Generate a new one in the Home Labs panel."
+    },
+    "step": {
+      "user": {
+        "title": "Home Labs Backup",
+        "description": "Usually the Home Labs Backup add-on sets this up for you. Enter the server address and the token (hls_…) from the Home Labs panel only if asked to.",
+        "data": {
+          "api_url": "Server address",
+          "api_token": "Token"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "cannot_connect": {
+      "message": "Cannot reach the Home Labs server: {error}"
+    },
+    "invalid_token": {
+      "message": "The Home Labs token was rejected. Paste a new one in the Home Labs Backup add-on."
+    }
+  }
+}

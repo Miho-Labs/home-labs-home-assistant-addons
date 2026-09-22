@@ -1,0 +1,45 @@
+# One repository, two independent add-ons. Each add-on folder keeps its own
+# code, tests and version (config.yaml); this file only holds shared tooling.
+
+[project]
+name = "home-labs-home-assistant-addons"
+version = "0"
+description = "Dodatki Home Assistant Home Labs: Home Labs Sync i Home Labs Backup"
+requires-python = ">=3.11"
+dependencies = ["aiohttp>=3.9", "PyYAML>=6.0"]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-aiohttp", "pytest-asyncio", "ruff"]
+
+[tool.pytest.ini_options]
+pythonpath = ["home_labs_sync", "home_labs_backup"]
+# Each add-on's tests run in their own session (both have a tests/conftest.py):
+#   python -m pytest home_labs_sync/tests
+#   python -m pytest home_labs_backup/tests
+testpaths = ["home_labs_sync/tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+line-length = 100
+# Home Labs Sync runs on Python 3.11+; Backup's add-on image is 3.12 and its
+# integration runs inside Home Assistant (3.13+).
+target-version = "py311"
+extend-exclude = ["tools"]
+
+[tool.ruff.per-file-target-version]
+"home_labs_backup/**" = "py312"
+"home_labs_backup/custom_components/**" = "py313"
+"home_labs_backup/tests_ha/**" = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+ignore = ["RUF001", "RUF002", "RUF003", "RUF012", "SIM108"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["hl_sync", "hl_backup", "custom_components", "hlb_integration"]
+
+[tool.ruff.lint.per-file-ignores]
+"home_labs_sync/tests/*" = ["B011", "RUF029"]
+"home_labs_backup/tests/*" = ["B011", "RUF029"]
+"home_labs_backup/tests_ha/*" = ["B011", "RUF029"]

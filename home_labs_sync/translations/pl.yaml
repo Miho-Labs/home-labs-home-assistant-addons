@@ -1,0 +1,31 @@
+configuration:
+  api_url:
+    name: Adres serwera Home Labs
+    description: Adres API, z którego dodatek pobiera konfigurację. Zmieniaj tylko na prośbę Home Labs.
+  api_token:
+    name: Token dostępu
+    description: Token z panelu Home Labs (zaczyna się od „hls_”). Daje dostęp wyłącznie do konfiguracji tego domu.
+  interval_minutes:
+    name: Częstość synchronizacji (minuty)
+    description: Co ile minut dodatek sprawdza, czy Home Labs opublikował nową konfigurację (5–1440).
+  scopes:
+    name: Zakresy synchronizacji
+    description: Co synchronizować — dashboards (dashboardy i pliki www), themes (motyw), automations (automatyzacje Home Labs), scenes (sceny Home Labs), media (zdjęcia wygaszacza WallPanel w /media/wallpanel; wyłącz, jeśli sam zarządzasz zdjęciami).
+  restart_policy:
+    name: Polityka restartu Home Assistant
+    description: never — tylko raport; notify — powiadomienie, gdy restart jest wymagany; auto — automatyczny restart w podanym oknie czasowym, jeśli sprawdzenie konfiguracji przeszło pomyślnie.
+  restart_window:
+    name: Okno automatycznego restartu
+    description: Godziny (czas lokalny) w formacie HH:MM-HH:MM, w których dozwolony jest automatyczny restart. Może przechodzić przez północ, np. 23:00-05:00.
+  entities_export_schedule:
+    name: Harmonogram eksportu encji
+    description: off — tylko na żądanie; daily — codziennie; weekly — co poniedziałek o wskazanej godzinie.
+  entities_export_hour:
+    name: Godzina eksportu encji
+    description: Godzina (0–23, czas lokalny), o której uruchamia się eksport według harmonogramu.
+  dry_run:
+    name: Tryb próbny (dry run)
+    description: Dodatek pokazuje w panelu i raporcie, co by zmienił, ale niczego nie zapisuje. Zalecane przy pierwszym uruchomieniu.
+  log_level:
+    name: Poziom logowania
+    description: Szczegółowość dziennika dodatku (debug, info, warning).

@@ -1,0 +1,30 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "Home Labs Backup jest już skonfigurowany.",
+      "missing_token": "Dodatek Home Labs Backup nie ma jeszcze tokenu. Wklej go w konfiguracji dodatku."
+    },
+    "error": {
+      "cannot_connect": "Brak połączenia z serwerem Home Labs.",
+      "invalid_token": "Token został odrzucony. Wygeneruj nowy w panelu Home Labs."
+    },
+    "step": {
+      "user": {
+        "title": "Home Labs Backup",
+        "description": "Zwykle konfiguruje to dodatek Home Labs Backup. Wpisz adres serwera i token (hls_…) z panelu Home Labs tylko na prośbę Home Labs.",
+        "data": {
+          "api_url": "Adres serwera",
+          "api_token": "Token"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "cannot_connect": {
+      "message": "Brak połączenia z serwerem Home Labs: {error}"
+    },
+    "invalid_token": {
+      "message": "Token Home Labs został odrzucony. Wklej nowy w dodatku Home Labs Backup."
+    }
+  }
+}
