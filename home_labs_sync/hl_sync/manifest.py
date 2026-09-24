@@ -9,7 +9,7 @@ from typing import Any
 
 import yaml
 
-from .hlyaml import contains_tagged, load_tolerant
+from .hlyaml import Tagged, contains_tagged, load_tolerant
 from .options import SCOPES
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
@@ -30,6 +30,24 @@ ALLOWED_PREFIXES = ("dashboards/", "www/", "themes/")
 ALLOWED_EXACT = {AUTOMATIONS_PATH: "automations", SCENES_PATH: "scenes"}
 WALLPANEL_DIR = "wallpanel"
 MEDIA_PREFIX = WALLPANEL_DIR + "/"
+
+# ``package.packages``: HA package YAML the server composes from ``clients/<slug>/packages/*.yaml``,
+# appended verbatim to the ``home_labs`` package. Integrations that run commands, change HA's
+# core/HTTP setup or collide with what the package already carries are refused outright.
+PACKAGE_FORBIDDEN_DOMAINS = frozenset(
+    {
+        "homeassistant",
+        "lovelace",
+        "frontend",
+        "http",
+        "shell_command",
+        "command_line",
+        "python_script",
+        "pyscript",
+    }
+)
+PACKAGE_RESERVED_KEYS = frozenset({"automation home_labs", "scene home_labs"})
+PACKAGE_ALLOWED_TAGS = frozenset({"!secret"})
 
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _COMMIT_RE = re.compile(r"^[0-9a-fA-F]{40}$")
@@ -90,6 +108,7 @@ class Release:
     published_at: str
     files: list[FileEntry]
     lovelace_fragment: str = ""
+    packages_fragment: str = ""
     managed_automations: list[str] = field(default_factory=list)
     managed_scenes: list[str] = field(default_factory=list)
     templates: dict[str, str] = field(default_factory=dict)
@@ -206,6 +225,58 @@ def _validate_lovelace_fragment(text: Any) -> str:
     return text if text.endswith("\n") else text + "\n"
 
 
+def package_key_problem(key: Any) -> str | None:
+    """Why a top-level key may not appear in ``package.packages`` (``None`` when it may)."""
+    if not isinstance(key, str) or not key.strip():
+        return f"nieprawidłowy klucz {key!r}"
+    if key in PACKAGE_RESERVED_KEYS:
+        return f"klucz {key!r} jest zarezerwowany dla pakietu home_labs"
+    domain = key.split(" ", 1)[0]
+    if domain in PACKAGE_FORBIDDEN_DOMAINS:
+        return f"integracja {domain!r} jest niedozwolona w pakietach Home Labs"
+    return None
+
+
+def _foreign_tags(obj: Any) -> list[str]:
+    """Tags other than ``!secret`` (with a plain text value) anywhere in ``obj``."""
+    if isinstance(obj, Tagged):
+        if obj.tag in PACKAGE_ALLOWED_TAGS and isinstance(obj.value, str):
+            return []
+        return [obj.tag]
+    if isinstance(obj, dict):
+        return [t for k, v in obj.items() for t in _foreign_tags(k) + _foreign_tags(v)]
+    if isinstance(obj, (list, tuple)):
+        return [t for v in obj for t in _foreign_tags(v)]
+    return []
+
+
+def _validate_packages_fragment(text: Any) -> str:
+    if text is None:
+        return ""
+    if not isinstance(text, str):
+        raise ManifestError("package.packages musi być tekstem YAML")
+    if not text.strip():
+        return ""
+    try:
+        data = load_tolerant(text)
+    except yaml.YAMLError as exc:
+        raise ManifestError(f"package.packages nie jest poprawnym YAML: {exc}") from exc
+    if data is None:
+        return ""
+    if not isinstance(data, dict):
+        raise ManifestError("package.packages musi być mapą YAML (klucze = integracje HA)")
+    for key in data:
+        problem = package_key_problem(key)
+        if problem:
+            raise ManifestError(f"package.packages: {problem}")
+    tags = sorted(set(_foreign_tags(data)))
+    if tags:
+        raise ManifestError(
+            f"package.packages: niedozwolone tagi YAML {tags} (dozwolony tylko !secret)"
+        )
+    return text if text.endswith("\n") else text + "\n"
+
+
 def _validate_files(raw_files: Any) -> list[FileEntry]:
     if not isinstance(raw_files, list):
         raise ManifestError("release.files musi być listą")
@@ -267,10 +338,11 @@ def _validate_release(raw: Any) -> Release | None:
     package = raw.get("package") or {}
     if not isinstance(package, dict):
         raise ManifestError("release.package musi być obiektem")
-    extra = set(package) - {"lovelace"}
+    extra = set(package) - {"lovelace", "packages"}
     if extra:
         raise ManifestError(f"release.package zawiera niedozwolone klucze: {sorted(extra)}")
     lovelace = _validate_lovelace_fragment(package.get("lovelace"))
+    packages = _validate_packages_fragment(package.get("packages"))
 
     managed = raw.get("managed_ids") or {}
     if not isinstance(managed, dict):
@@ -296,6 +368,7 @@ def _validate_release(raw: Any) -> Release | None:
         published_at=published_at,
         files=files,
         lovelace_fragment=lovelace,
+        packages_fragment=packages,
         managed_automations=managed_automations,
         managed_scenes=managed_scenes,
         templates=templates,

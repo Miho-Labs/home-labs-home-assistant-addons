@@ -25,6 +25,7 @@ from .manifest import (
     AUTOMATIONS_PATH,
     MAX_FILE_SIZE,
     MAX_RELEASE_SIZE,
+    PACKAGE_RESERVED_KEYS,
     ROOT_CONFIG,
     SCENES_PATH,
     FileEntry,
@@ -144,6 +145,10 @@ def apply_plan(
 def compose_package(release: Release, scopes: tuple[str, ...], layout: Any) -> str:
     """Text of the ``home_labs`` package for the enabled scopes.
 
+    Scope ``packages`` appends the server-composed HA package YAML (``release.packages_fragment``,
+    already validated: no ``lovelace``, no ``automation home_labs`` / ``scene home_labs``), so
+    its top-level keys never collide with the lines generated here.
+
     ``layout`` provides ``include_prefix`` (relative path from the package dir to ``home_labs/``)
     and ``wrap_key`` (set for ``!include_dir_merge_named`` layouts, where the file must be
     ``home_labs: {...}``).
@@ -158,6 +163,8 @@ def compose_package(release: Release, scopes: tuple[str, ...], layout: Any) -> s
         body.append(f"automation home_labs: !include {prefix}automations.yaml\n")
     if "scenes" in enabled and SCENES_PATH in files:
         body.append(f"scene home_labs: !include {prefix}scenes.yaml\n")
+    if "packages" in enabled and release.packages_fragment.strip():
+        body.append(release.packages_fragment.rstrip("\n") + "\n")
     wrap_key = getattr(layout, "wrap_key", None)
     if wrap_key:
         if not body:
@@ -176,6 +183,7 @@ class PackageDiff:
     changed: bool
     lovelace_changed: bool
     exists: bool
+    packages_changed: bool = False
 
 
 def extract_lovelace(text: str | None, wrap_key: str | None) -> Any:
@@ -193,6 +201,23 @@ def extract_lovelace(text: str | None, wrap_key: str | None) -> Any:
     return None
 
 
+def extract_packages(text: str | None, wrap_key: str | None) -> dict[str, Any]:
+    """Everything in a package text besides ``lovelace`` and our own ``!include`` lines —
+    i.e. what came from ``release.packages_fragment``. Tags compare by tag and value."""
+    if not text:
+        return {}
+    try:
+        data = load_tolerant(text)
+    except yaml.YAMLError:
+        return {}
+    if wrap_key and isinstance(data, dict):
+        data = data.get(wrap_key)
+    if not isinstance(data, dict):
+        return {}
+    skip = {"lovelace"} | PACKAGE_RESERVED_KEYS
+    return {k: v for k, v in data.items() if k not in skip}
+
+
 def package_diff(config_dir: Path, layout: Any, text: str) -> PackageDiff:
     """Compare the composed package with the existing file without writing anything."""
     rel = normalize_rel(layout.package_path)
@@ -206,7 +231,10 @@ def package_diff(config_dir: Path, layout: Any, text: str) -> PackageDiff:
     lovelace_changed = changed and extract_lovelace(old, wrap_key) != extract_lovelace(
         text, wrap_key
     )
-    return PackageDiff(rel, changed, lovelace_changed, exists)
+    packages_changed = changed and extract_packages(old, wrap_key) != extract_packages(
+        text, wrap_key
+    )
+    return PackageDiff(rel, changed, lovelace_changed, exists, packages_changed)
 
 
 def write_package(config_dir: Path, layout: Any, text: str) -> PackageDiff:
@@ -215,8 +243,13 @@ def write_package(config_dir: Path, layout: Any, text: str) -> PackageDiff:
     if diff.changed:
         dest = resolve_inside(config_dir, diff.path)
         atomic_write(dest, text.encode("utf-8"))
+        notes = [
+            n
+            for n, on in (("lovelace", diff.lovelace_changed), ("pakiety", diff.packages_changed))
+            if on
+        ]
         log.info(
-            "Zapisano pakiet %s%s", diff.path, " (zmiana lovelace)" if diff.lovelace_changed else ""
+            "Zapisano pakiet %s%s", diff.path, f" (zmiana: {', '.join(notes)})" if notes else ""
         )
     return diff
 

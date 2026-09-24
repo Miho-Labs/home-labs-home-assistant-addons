@@ -5,7 +5,7 @@ dodatków oba widać w jednej sekcji **Home Labs Add-ons**.
 
 | Dodatek | Co robi | Dokumentacja |
 |---|---|---|
-| **Home Labs Sync** | pobiera konfigurację opublikowaną dla domu przez Home Labs (dashboardy, motyw, automatyzacje i sceny, zdjęcia wygaszacza), eksportuje listę encji | [home_labs_sync/DOCS.md](home_labs_sync/DOCS.md) |
+| **Home Labs Sync** | pobiera konfigurację opublikowaną dla domu przez Home Labs (dashboardy, motyw, automatyzacje i sceny, pakiety HA, zdjęcia wygaszacza), eksportuje listę encji | [home_labs_sync/DOCS.md](home_labs_sync/DOCS.md) |
 | **Home Labs Backup** | kopie zapasowe Home Assistant w chmurze Home Labs jako natywna lokalizacja kopii (Ustawienia → System → Kopie zapasowe) | [home_labs_backup/DOCS.md](home_labs_backup/DOCS.md) |
 
 Oba używają tego samego tokenu z panelu Home Labs (`hls_…`).
@@ -49,7 +49,7 @@ będzie). Home Labs Backup od razu przekaże token istniejącej integracji; rest
 
 | Dodatek | Co zapisuje |
 |---|---|
-| Home Labs Sync | wyłącznie wskazane katalogi (`dashboards/`, `www/`, `themes/`, `home_labs/`, plik pakietu, `/media/wallpanel/`) i oznaczony blok na końcu `configuration.yaml` (po zrobieniu kopii); nigdy `secrets.yaml` ani `.storage/`; każdy plik weryfikowany SHA-256, nic pobranego nie jest wykonywane |
+| Home Labs Sync | wyłącznie wskazane katalogi (`dashboards/`, `www/`, `themes/`, `home_labs/`, plik pakietu, `/media/wallpanel/`) i oznaczony blok na końcu `configuration.yaml` (po zrobieniu kopii); nigdy `secrets.yaml` ani `.storage/`; każdy plik weryfikowany SHA-256, nic pobranego nie jest wykonywane przez dodatek; pakiety HA bez `shell_command` / `command_line` / `python_script` i bez `homeassistant:` / `http:` |
 | Home Labs Backup | wyłącznie `custom_components/home_labs_backup`; kopie wysyła Home Assistant, zaszyfrowane kluczem, którego serwer Home Labs nie zna; klucze do magazynu ma tylko serwer |
 
 Token daje dostęp tylko do jednego domu i można go w każdej chwili unieważnić w panelu Home Labs.

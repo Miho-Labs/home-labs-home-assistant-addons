@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0
+
+- Nowy zakres `packages`: pakiety HA Home Labs (`clients/<slug>/packages/*.yaml` w repo — np. encja `climate_template` na pilocie IR, skrypty, pomocnicy, grupa `notify`) są doklejane do pakietu `home_labs/package.yaml`. `configuration.yaml` bez zmian.
+- Zmiana albo usunięcie pakietów = wymagany restart Home Assistant (polityka `restart_policy` jak przy dashboardach).
+- Manifest: nowe pole `release.package.packages` (tekst YAML). Dozwolony tylko tag `!secret`; odrzucane integracje `homeassistant`, `lovelace`, `frontend`, `http`, `shell_command`, `command_line`, `python_script`, `pyscript` oraz klucze `automation home_labs` / `scene home_labs`.
+- Istniejące instalacje zachowują zapisaną listę `scopes` (bez `packages`) — dopisz zakres ręcznie; do tego czasu dodatek ostrzega w panelu i raporcie, że pakiety z wydania pominął.
+
 ## 0.2.2
 
 - Domyślna polityka restartu to teraz `auto` (restart w oknie `restart_window`, tylko gdy „Sprawdź konfigurację” przeszło). Istniejące instalacje zachowują zapisaną wartość — zmień ją ręcznie w konfiguracji dodatku.

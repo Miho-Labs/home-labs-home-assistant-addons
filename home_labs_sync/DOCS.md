@@ -11,12 +11,13 @@ Dodatek do Home Assistant dla klientów Home Labs (home-labs.pl). Pobiera konfig
 | `automations` | `/config/home_labs/automations.yaml` | automatyzacje Home Labs (osobny plik, nie `automations.yaml`) |
 | `scenes` | `/config/home_labs/scenes.yaml` | sceny Home Labs |
 | `media` | `/media/wallpanel/**` | zdjęcia wygaszacza WallPanel na tabletach (katalog mediów HA, nie konfiguracji) |
+| `packages` | treść w pakiecie `home_labs/package.yaml` | pakiety HA Home Labs: encje szablonowe (np. klimatyzacja na IR), skrypty, pomocnicy, grupy powiadomień — szczegóły w „Pakiety” niżej |
 
 Do tego dodatek:
 
 - składa lokalnie pakiet `home_labs/package.yaml` i dołącza go w `configuration.yaml` (szczegóły niżej),
 - przejmuje automatyzacje i sceny Home Labs, które wcześniej były wklejane ręcznie w edytorze UI (kopia zapasowa w danych dodatku),
-- przeładowuje automatyzacje, sceny i motywy bez restartu; restart jest potrzebny **tylko** przy dodaniu/zmianie dashboardu; zdjęcia wygaszacza nie wymagają niczego — WallPanel sam odczytuje katalog,
+- przeładowuje automatyzacje, sceny i motywy bez restartu; restart jest potrzebny **tylko** przy dodaniu/zmianie dashboardu albo pakietów; zdjęcia wygaszacza nie wymagają niczego — WallPanel sam odczytuje katalog,
 - wystawia sensor `sensor.home_labs_sync` i powiadomienia trwałe w Home Assistant,
 - pokazuje panel „Home Labs Sync” w menu bocznym.
 
@@ -40,7 +41,7 @@ Dodatek **nie** rusza własnych automatyzacji, scen, skryptów ani innych plikó
 | `api_url` | `https://public.home-labs.pl` | Adres serwera Home Labs. Zmieniaj tylko na prośbę Home Labs. |
 | `api_token` | — | Token z panelu Home Labs. Daje dostęp tylko do konfiguracji tego domu. |
 | `interval_minutes` | `30` | Co ile minut sprawdzać, czy jest nowa konfiguracja (5–1440). Serwer odpowiada „bez zmian” bardzo tanio, więc 30 min jest w porządku. |
-| `scopes` | wszystkie pięć | Które zakresy synchronizować. Wyłączony zakres = pliki zostają, dodatek przestaje nimi zarządzać. `media` wyłącz, jeśli klient sam zarządza zdjęciami wygaszacza. |
+| `scopes` | wszystkie sześć | Które zakresy synchronizować. Wyłączony zakres = pliki zostają, dodatek przestaje nimi zarządzać. `media` wyłącz, jeśli klient sam zarządza zdjęciami wygaszacza. **Instalacje sprzed 0.3.0 mają zapisaną starą listę bez `packages`** — dopisz go ręcznie, gdy Home Labs przygotuje pakiety (dodatek ostrzega w panelu, gdy wydanie je zawiera, a zakres jest wyłączony). |
 | `restart_policy` | `auto` | `never` — tylko raport do Home Labs; `notify` — powiadomienie w HA, gdy restart jest potrzebny; `auto` — restart automatyczny w oknie `restart_window`, tylko gdy „Sprawdź konfigurację” przeszło i tylko raz na wydanie. |
 | `restart_window` | `02:00-05:00` | Okno restartu automatycznego (czas lokalny), może przechodzić przez północ. |
 | `entities_export_schedule` | `off` | Eksport encji według harmonogramu: `daily` (codziennie) lub `weekly` (poniedziałki). |
@@ -111,6 +112,25 @@ Każdy cykl (także gdy serwer odpowiada „bez zmian”) porównuje pliki na Ho
 - Zdjęcia wygaszacza WallPanel na tabletach zmieniają się same po publikacji nowego zestawu — bez restartu i bez klikania.
 - Sensor `sensor.home_labs_sync` (stan `ok` / `noop` / `error` / `paused` / `dry_run`) z atrybutami: identyfikator wydania, commit, data publikacji, czas ostatniej synchronizacji, czy wymagany restart.
 
+## Pakiety (zakres `packages`)
+
+Część konfiguracji Home Assistant nie jest ani dashboardem, ani automatyzacją: encja `climate` sterująca klimatyzatorem przez IR (platforma `climate_template` z HACS), skrypty, pomocnicy (`input_boolean`, `input_number` …), grupa powiadomień `notify`. Home Labs trzyma je w repozytorium w `clients/<slug>/packages/*.yaml` (każdy plik to zwykły pakiet HA), a serwer łączy je w jeden fragment YAML. Dodatek dokleja ten fragment do pakietu `home_labs/package.yaml` — **`configuration.yaml` się nie zmienia**, niezależnie od wariantu dołączenia pakietu.
+
+| Sytuacja | Co robi dodatek |
+|---|---|
+| wydanie zawiera pakiety, zakres `packages` włączony | dokleja je do pakietu `home_labs`; zmiana treści pakietów = **wymagany restart** HA (nowe integracje ładują się tylko przy starcie) |
+| pakiet usunięty z repo | znika z pakietu `home_labs` przy najbliższym wydaniu; też wymaga restartu |
+| zakres `packages` wyłączony | pakiety pominięte; ostrzeżenie w panelu i raporcie |
+| integracja wymaga HACS (np. `climate_template`) | dodatek jej nie instaluje — bez niej „Sprawdź konfigurację” zgłosi błąd, a automatyczny restart się nie wykona |
+
+Zasady (sprawdza je serwer Home Labs, a dodatek jeszcze raz przy każdym manifeście — naruszenie = odrzucony manifest):
+
+- dozwolony tylko tag `!secret`; `!include`, `!include_dir_*`, `!env_var` są odrzucane,
+- zakazane integracje: `homeassistant`, `lovelace`, `frontend`, `http`, `shell_command`, `command_line`, `python_script`, `pyscript` (także z etykietą, np. `command_line nasz:`),
+- zarezerwowane klucze `automation home_labs` i `scene home_labs` (dodaje je sam dodatek).
+
+Pakiety wymagają dodatku w wersji **0.3.0 lub nowszej** — starszy odrzuci manifest z pakietami w całości.
+
 ## Zdjęcia wygaszacza (zakres `media`)
 
 Zdjęcia, które WallPanel pokazuje na tabletach jako wygaszacz, leżą w repozytorium Home Labs w `clients/<slug>/media/wallpanel/`. Po publikacji dodatek zapisuje je w `/media/wallpanel/` na Home Assistant — to katalog **mediów** HA (montowanie `media` dodatku), nie katalog konfiguracji. WallPanel czyta je stamtąd (`media-source://media_source/local/wallpanel`), więc nowy zestaw pojawia się na tabletach sam, bez przeładowania i bez restartu.
@@ -158,7 +178,7 @@ W trybie próbnym dodatek pobiera manifest, liczy plan (które pliki zapisze, kt
 - Dodatek zapisuje **wyłącznie** w: `dashboards/`, `www/`, `themes/`, `home_labs/`, pliku pakietu (`home_labs/package.yaml` albo `<katalog pakietów>/home_labs.yaml`), w `/media/wallpanel/` (zakres `media`) oraz — tylko przez usunięcie wpisów Home Labs — w `automations.yaml` i `scenes.yaml`. Do `configuration.yaml` może wyłącznie dopisać oznaczony blok (po kopii).
 - Nigdy nie czyta ani nie zapisuje `secrets.yaml`, `.storage/`, plików poza katalogiem konfiguracji ani niczego w `/media` poza `wallpanel/`. Każda ścieżka z serwera jest sprawdzana osobno dla katalogu docelowego (brak `..`, brak ścieżek bezwzględnych, tylko dozwolone katalogi — dla mediów wyłącznie `wallpanel/`); manifest z niedozwoloną ścieżką jest odrzucany w całości.
 - Pliki są pobierane do katalogu tymczasowego, weryfikowane sumą SHA-256 i dopiero wtedy — wszystkie albo żadne — przenoszone do `/config` lub `/media/wallpanel`. Limity: 10 MB na plik, 150 MB na wydanie.
-- Nic pobranego z serwera nie jest wykonywane. Pakiet składa dodatek lokalnie i przyjmuje z serwera tylko sekcję `lovelace` (bez tagów YAML).
+- Nic pobranego z serwera nie jest wykonywane przez dodatek. Pakiet składa dodatek lokalnie i przyjmuje z serwera tylko sekcję `lovelace` (bez tagów YAML) oraz — w zakresie `packages` — konfigurację HA bez integracji uruchamiających polecenia (`shell_command`, `command_line`, `python_script`, `pyscript`) i bez zmian w `homeassistant:` / `http:` (tylko tag `!secret`).
 - Token daje dostęp tylko do konfiguracji tego jednego domu i można go unieważnić w panelu Home Labs. Raport zwrotny zawiera: wersję dodatku i Home Assistant, identyfikator wydania, status, listę zapisanych/usuniętych plików, błędy, wynik „Sprawdź konfigurację” — bez danych osobowych.
 - Kopie zapasowe (nadpisane pliki klienta, `configuration.yaml` przed dopisaniem bloku, `automations.yaml` / `scenes.yaml` przed przejęciem, usunięte zdjęcia wygaszacza w podkatalogu `media/`) leżą w danych dodatku (`/data/backup/<wydanie>/`), przechowywane są 2 ostatnie wydania.
 
@@ -174,6 +194,8 @@ W trybie próbnym dodatek pobiera manifest, liczy plan (które pliki zapisze, kt
 | Dashboard nie pojawia się w menu | Sprawdź, czy panel nie pokazuje „wymagany restart Home Assistant”. |
 | „Katalog mediów /media nie istnieje” (status „częściowo”) | Supervisor nie zamontował `/media` — zaktualizuj Home Assistant; jeśli zdjęcia wygaszacza nie są potrzebne, wyłącz zakres `media` w `scopes`. Pozostałe zakresy działają. |
 | Zdjęcia wygaszacza się nie zmieniają | Sprawdź, czy zakres `media` jest włączony i czy w panelu na liście „Zapisane pliki” są wpisy `media:wallpanel/…`. WallPanel musi wskazywać `media-source://media_source/local/wallpanel`. |
+| Pakiety się nie pojawiają / ostrzeżenie „zakres 'packages' jest wyłączony” | Konfiguracja dodatku → `scopes` → dopisz `packages`, zapisz, **Synchronizuj teraz**, potem restart HA. |
+| Po pakietach „Sprawdź konfigurację”: błąd „Integration … not found” | Pakiet używa integracji z HACS, której nie ma (np. Template Climate) — zainstaluj ją w HACS i zrestartuj HA. |
 | Automatyzacja Home Labs „nie do edycji” | To normalne — jest ładowana z pakietu. Można ją włączać/wyłączać. |
 
 Dziennik: zakładka **Dziennik** dodatku (albo ostatnie 20 wpisów w panelu). Przy zgłoszeniu do Home Labs ustaw `log_level: debug` i podaj identyfikator wydania z panelu. Stan dodatku widać też w `sensor.home_labs_sync`.
