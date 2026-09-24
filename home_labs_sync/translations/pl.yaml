@@ -10,7 +10,7 @@ configuration:
     description: Co ile minut dodatek sprawdza, czy Home Labs opublikował nową konfigurację (5–1440).
   scopes:
     name: Zakresy synchronizacji
-    description: Co synchronizować — dashboards (dashboardy i pliki www), themes (motyw), automations (automatyzacje Home Labs), scenes (sceny Home Labs), media (zdjęcia wygaszacza WallPanel w /media/wallpanel; wyłącz, jeśli sam zarządzasz zdjęciami).
+    description: Co synchronizować — dashboards (dashboardy i pliki www), themes (motyw), automations (automatyzacje Home Labs), scenes (sceny Home Labs), media (zdjęcia wygaszacza WallPanel w /media/wallpanel; wyłącz, jeśli sam zarządzasz zdjęciami), packages (pakiety HA Home Labs: encje szablonowe, skrypty, pomocnicy — wymagają restartu HA).
   restart_policy:
     name: Polityka restartu Home Assistant
     description: never — tylko raport; notify — powiadomienie, gdy restart jest wymagany; auto — automatyczny restart w podanym oknie czasowym, jeśli sprawdzenie konfiguracji przeszło pomyślnie.

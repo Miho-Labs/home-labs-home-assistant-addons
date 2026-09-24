@@ -38,7 +38,14 @@ async def test_media_files_land_in_media_dir_and_are_reported(env):
     assert report["status"] == "ok"
     assert sorted(report["applied"]) == expected
     assert report["deleted"] == [] and report["errors"] == []
-    assert report["scopes"] == ["dashboards", "themes", "automations", "scenes", "media"]
+    assert report["scopes"] == [
+        "dashboards",
+        "themes",
+        "automations",
+        "scenes",
+        "media",
+        "packages",
+    ]
 
     state = json.loads((env.data_dir / "state.json").read_text(encoding="utf-8"))
     assert set(state["applied"]) == config_keys() | media_keys()

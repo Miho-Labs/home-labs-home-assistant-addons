@@ -65,7 +65,14 @@ async def test_first_sync_writes_everything(env):
     assert report["needs_restart"] is True and report["restart_done"] is False
     assert sorted(report["applied"]) == sorted([*SAMPLE_FILES, "home_labs/package.yaml"])
     assert report["deleted"] == [] and report["errors"] == []
-    assert report["scopes"] == ["dashboards", "themes", "automations", "scenes", "media"]
+    assert report["scopes"] == [
+        "dashboards",
+        "themes",
+        "automations",
+        "scenes",
+        "media",
+        "packages",
+    ]
     assert report["check_result"] == "ok" and report["dry_run"] is False
     assert report["ha_version"] == "2026.9.1" and report["addon_version"] == VERSION
 

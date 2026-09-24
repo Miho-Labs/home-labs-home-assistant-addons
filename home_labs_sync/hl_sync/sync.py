@@ -34,6 +34,10 @@ NOTIFY_BOOTSTRAP = "home_labs_sync_bootstrap"
 NOTIFY_CONFLICT = "home_labs_sync_conflict"
 
 RESTART_TITLE = "Home Labs Sync: wymagany restart Home Assistant"
+PACKAGES_SCOPE_OFF = (
+    "Wydanie zawiera pakiety Home Labs (clients/<slug>/packages/), ale zakres 'packages' "
+    "jest wyłączony w opcjach dodatku — pakiety pominięte. Włącz go w Konfiguracji dodatku."
+)
 RESTART_MESSAGE = (
     "Dodatek Home Labs Sync zaktualizował konfigurację dashboardów (wydanie {commit}). "
     "Aby zmiany były widoczne, uruchom ponownie Home Assistant: "
@@ -312,6 +316,9 @@ class SyncRunner:
             self.state.export_template = release.templates["entities_export"]
 
         scopes = self.options.scopes
+        if release.packages_fragment and "packages" not in scopes:
+            result.warnings.append(PACKAGES_SCOPE_OFF)
+            log.log(logging.DEBUG if reconcile else logging.WARNING, PACKAGES_SCOPE_OFF)
         if "media" in scopes and not self._media_ready(result):
             scopes = tuple(s for s in scopes if s != "media")
         config_dir = self.paths.config_dir
@@ -342,7 +349,9 @@ class SyncRunner:
                 [pkg_diff.path] if pkg_diff.changed else []
             )
             result.deleted = [planner.display_key(k) for k in plan_.deletes]
-            result.needs_restart = pkg_diff.lovelace_changed or bplan.append_block
+            result.needs_restart = (
+                pkg_diff.lovelace_changed or pkg_diff.packages_changed or bplan.append_block
+            )
             result.status = "ok" if result.plan_lines else "noop"
             result.report_wanted = True
             log.info("Tryb próbny (dry_run) — plan bez zapisu:")
@@ -404,7 +413,8 @@ class SyncRunner:
         if result.check_result == "error":
             log.error("Sprawdzenie konfiguracji Home Assistant: błąd: %s", result.check_output)
 
-        if pkg.lovelace_changed or appended:
+        # New or changed integrations from ``packages`` load only on a restart.
+        if pkg.lovelace_changed or pkg.packages_changed or appended:
             self.state.pending_restart = True
         result.needs_restart = self.state.pending_restart
 

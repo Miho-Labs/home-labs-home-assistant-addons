@@ -74,6 +74,7 @@ def make_release(
     *,
     media: dict[str, bytes] | None = None,
     lovelace: str | None = LOVELACE_FRAGMENT,
+    packages: str | None = None,
     managed: dict | None = None,
     templates: dict | None = None,
     release_id: str = RELEASE_ID,
@@ -95,12 +96,17 @@ def make_release(
         {"path": path, "root": "media", "scope": "media", "sha256": sha(data), "size": len(data)}
         for path, data in (media or {}).items()
     ]
+    package: dict[str, str] = {}
+    if lovelace is not None:
+        package["lovelace"] = lovelace
+    if packages is not None:
+        package["packages"] = packages
     return {
         "release_id": release_id,
         "commit": commit,
         "published_at": "2026-09-22T10:00:00+00:00",
         "files": entries,
-        "package": {"lovelace": lovelace} if lovelace is not None else {},
+        "package": package,
         "managed_ids": managed or {"automations": [], "scenes": []},
         "templates": templates or {},
         "warnings": warnings or [],

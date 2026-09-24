@@ -33,7 +33,7 @@ def test_load_options_defaults_and_normalization(tmp_path):
 def test_load_options_missing_file(tmp_path):
     options = load_options(tmp_path / "nope.json")
     assert options == Options()
-    assert options.scopes == ("dashboards", "themes", "automations", "scenes", "media")
+    assert options.scopes == ("dashboards", "themes", "automations", "scenes", "media", "packages")
 
 
 def test_resolve_paths_from_env(tmp_path):

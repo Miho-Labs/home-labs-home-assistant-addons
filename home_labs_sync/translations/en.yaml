@@ -10,7 +10,7 @@ configuration:
     description: How often the add-on checks whether Home Labs published new configuration (5–1440).
   scopes:
     name: Sync scopes
-    description: What to synchronize — dashboards (dashboards and www files), themes, automations (Home Labs automations), scenes (Home Labs scenes), media (WallPanel screensaver photos in /media/wallpanel; turn off if you manage the photos yourself).
+    description: What to synchronize — dashboards (dashboards and www files), themes, automations (Home Labs automations), scenes (Home Labs scenes), media (WallPanel screensaver photos in /media/wallpanel; turn off if you manage the photos yourself), packages (Home Labs HA packages: template entities, scripts, helpers — need a Home Assistant restart).
   restart_policy:
     name: Home Assistant restart policy
     description: never — report only; notify — persistent notification when a restart is required; auto — automatic restart inside the window when the configuration check passes.

@@ -11,7 +11,7 @@ from pathlib import Path
 
 log = logging.getLogger(__name__)
 
-SCOPES: tuple[str, ...] = ("dashboards", "themes", "automations", "scenes", "media")
+SCOPES: tuple[str, ...] = ("dashboards", "themes", "automations", "scenes", "media", "packages")
 RESTART_POLICIES = ("never", "notify", "auto")
 EXPORT_SCHEDULES = ("off", "daily", "weekly")
 LOG_LEVELS = ("debug", "info", "warning")
